@@ -193,6 +193,55 @@ plt.title("Degree Distribution of Cyanobacteria Network")
 plt.xticks(degrees)
 plt.show()
 
+# -----------------------------
+# Improved Categorical Histogram: Clustering Coefficients by Quadrant
+# -----------------------------
+import matplotlib.pyplot as plt
+import numpy as np
+from collections import Counter
+
+# Get clustering values per node in each quadrant
+clustering_data = {}
+unique_vals = set()
+
+for q in ['Q1', 'Q3']:
+    q_nodes = [f"Cell-{row['who']}" for _, row in df[df['quadrant'] == q].iterrows()]
+    subG = G.subgraph(q_nodes)
+    clustering_vals = list(nx.clustering(subG).values())
+    
+    # Round for categorical binning (e.g., 0.0, 0.33, 0.5, 1.0)
+    clustering_rounded = [round(v, 2) for v in clustering_vals]
+    counts = Counter(clustering_rounded)
+    clustering_data[q] = counts
+    unique_vals.update(counts.keys())
+
+# Sort unique clustering coefficient bins
+sorted_vals = sorted(unique_vals)
+
+# Prepare bar heights
+q1_counts = [clustering_data['Q1'].get(v, 0) for v in sorted_vals]
+q3_counts = [clustering_data['Q3'].get(v, 0) for v in sorted_vals]
+
+x = np.arange(len(sorted_vals))
+width = 0.35
+
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.bar(x - width/2, q1_counts, width, label='Q1', color='red', edgecolor='black')
+ax.bar(x + width/2, q3_counts, width, label='Q3', color='blue', edgecolor='black')
+
+# Labeling
+ax.set_xticks(x)
+ax.set_xticklabels(sorted_vals)
+ax.set_xlabel("Clustering Coefficient")
+ax.set_ylabel("Number of Nodes")
+ax.set_title("Clustering Coefficient Distribution by Quadrant")
+ax.legend()
+plt.tight_layout()
+plt.savefig("clustering_categorical_by_quadrant.png", dpi=300)
+plt.show()
+
+
+
 if nx.is_connected(G):
     print(f"Diameter: {nx.diameter(G_no_nest)}")
     print(f"Average Path Length: {nx.average_shortest_path_length(G_no_nest):.4f}")
